@@ -159,39 +159,45 @@ void A_input(struct pkt packet) {
 
 
 /* called when A's timer goes off */
-void A_timerinterrupt(void)
-{
+void A_timerinterrupt(void) {
   int i;
 
-  if (TRACE > 0)
-    printf("----A: time out,resend packets!\n");
+  /* Find the first unacknowledged packet in the sending window */
+  for (i = base; i < nextseqnum; i++) {
+      if (ack_status[i % BUFFER_SIZE] == 0) {  /* Unacknowledged */
+          if (TRACE > 0)
+              printf("----A: Timer interrupt, resending packet %d\n", i);
 
-  for(i=0; i<windowcount; i++) {
+          /* Resend the packet */
+          tolayer3(0, send_buffer[i % BUFFER_SIZE]);
 
-    if (TRACE > 0)
-      printf ("---A: resending packet %d\n", (buffer[(windowfirst+i) % WINDOWSIZE]).seqnum);
-
-    tolayer3(A,buffer[(windowfirst+i) % WINDOWSIZE]);
-    packets_resent++;
-    if (i==0) starttimer(A,RTT);
+          /* Restart the timer */
+          starttimer(0, 16.0);
+          break;  /* Only retransmit one packet (the earliest unacked) */
+      }
   }
-}       
+}
+   
 
 
 
 /* the following routine will be called once (only) before any other */
 /* entity A routines are called. You can use it to do any initialization */
-void A_init(void)
-{
-  /* initialise A's window, buffer and sequence number */
-  A_nextseqnum = 0;  /* A starts with seq num 0, do not change this */
-  windowfirst = 0;
-  windowlast = -1;   /* windowlast is where the last packet sent is stored.  
-		     new packets are placed in winlast + 1 
-		     so initially this is set to -1
-		   */
-  windowcount = 0;
+void A_init(void) {
+  int i;
+
+  /* Initialize base and next sequence number */
+  base = 0;
+  nextseqnum = 0;
+
+  /* Initialize ACK status array to 0 (not acknowledged) */
+  for (i = 0; i < BUFFER_SIZE; i++) {
+      ack_status[i] = 0;
+  }
+
+  /* No need to initialize send_buffer[], as packets will be written when sent */
 }
+
 
 
 
