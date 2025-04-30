@@ -110,7 +110,7 @@ void A_output(struct msg message) {
     nextseqnum++;
   } else {
     /* Window is full, discard the message */
-    printf("A_output: window is full, message discarded\n");
+    printf("----A: New message arrives, send window is full, do nothing!\n");
   }
 }
 
@@ -121,6 +121,9 @@ void A_output(struct msg message) {
 */
 void A_input(struct pkt packet) {
   /*Check for corruption*/
+  int acknum;
+  acknum = packet.acknum;
+
   if (IsCorrupted(packet)) {
       if (TRACE > 0)
           printf("----A: corrupted ACK %d is received, ignored.\n", packet.acknum);
@@ -130,7 +133,6 @@ void A_input(struct pkt packet) {
   if (TRACE > 0)
       printf("----A: uncorrupted ACK %d is received\n", packet.acknum);
 
-  int acknum = packet.acknum;
 
   /*Check if ACK is within the sending window*/
   if (acknum >= base && acknum < base + WINDOW_SIZE) {
@@ -213,15 +215,16 @@ void A_init(void) {
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 void B_input(struct pkt packet) {
-  int i;
+  int seq;
+  seq = packet.seqnum;
   
   if (IsCorrupted(packet)) {
       if (TRACE > 0)
-          printf("----B: packet %d is corrupted, ignored\n", packet.seqnum);
+        printf("----B: packet %d is corrupted, ignored\n", packet.seqnum);
       return;
   }
 
-  int seq = packet.seqnum;
+  
 
   if (TRACE > 0)
       printf("----B: received packet %d\n", seq);
