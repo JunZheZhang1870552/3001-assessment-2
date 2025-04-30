@@ -207,8 +207,8 @@ void A_init(void) {
 
 /********* Receiver (B)  variables and procedures ************/
 
-//static int expectedseqnum; // the sequence number expected next by the receiver 
-//static int B_nextseqnum;   // the sequence number for the next packets sent by B 
+/*static int expectedseqnum; the sequence number expected next by the receiver */
+/*static int B_nextseqnum;  the sequence number for the next packets sent by B */
 
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
@@ -227,7 +227,7 @@ void B_input(struct pkt packet) {
       printf("----B: received packet %d\n", seq);
 
   /* Check if within receiver window */
-  if (seq >= expectedseqnum && seq < expectedseqnum + RECEIVER_WINDOW_SIZE) {
+  if (seq >= expectedseqnum && seq < expectedseqnum + WINDOW_SIZE) {
       /* Not received before */
       if (recv_status[seq % SEQSPACE] == 0) {
           recv_buffer[seq % SEQSPACE] = packet;
