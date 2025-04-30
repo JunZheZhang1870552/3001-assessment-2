@@ -78,39 +78,39 @@ bool IsCorrupted(struct pkt packet)
 
 /* called from layer 5 (application layer), passed the message to be sent to other side */
 void A_output(struct msg message) {
+    struct pkt packet;
+    int i;
   /* Check if the sending window is full */
   if (nextseqnum < base + WINDOW_SIZE) {
-      struct pkt packet;
 
-      /* Fill the packet fields */
-      packet.seqnum = nextseqnum;
-      packet.acknum = -1;  /* Not used for data packets */
-      memcpy(packet.payload, message.data, 20);
+    /* Fill the packet fields */
+    packet.seqnum = nextseqnum;
+    packet.acknum = -1;  /* Not used for data packets */
+    memcpy(packet.payload, message.data, 20);
 
-      /* Compute checksum */
-      packet.checksum = 0;
-      int i;
-      for (i = 0; i < 20; i++) {
-          packet.checksum += packet.payload[i];
-      }
-      packet.checksum += packet.seqnum + packet.acknum;
+    /* Compute checksum */
+    packet.checksum = 0;
+    for (i = 0; i < 20; i++) {
+        packet.checksum += packet.payload[i];
+    }
+    packet.checksum += packet.seqnum + packet.acknum;
 
-      /* Store the packet in the sending buffer */
-      send_buffer[nextseqnum % BUFFER_SIZE] = packet;
-      ack_status[nextseqnum % BUFFER_SIZE] = 0;  /* Not acknowledged yet */
+    /* Store the packet in the sending buffer */
+    send_buffer[nextseqnum % BUFFER_SIZE] = packet;
+    ack_status[nextseqnum % BUFFER_SIZE] = 0;  /* Not acknowledged yet */
 
-      /* Send the packet to layer 3 */
-      tolayer3(0, packet);
+    /* Send the packet to layer 3 */
+    tolayer3(0, packet);
 
-      /* Start the timer if this is the base packet */
-      if (base == nextseqnum) {
-          starttimer(0, 16.0);
-      }
+    /* Start the timer if this is the base packet */
+    if (base == nextseqnum) {
+        starttimer(0, 16.0);
+    }
 
-      nextseqnum++;
+    nextseqnum++;
   } else {
-      /* Window is full, discard the message */
-      printf("A_output: window is full, message discarded\n");
+    /* Window is full, discard the message */
+    printf("A_output: window is full, message discarded\n");
   }
 }
 
@@ -134,7 +134,7 @@ void A_input(struct pkt packet) {
 
   /*Check if ACK is within the sending window*/
   if (acknum >= base && acknum < base + WINDOW_SIZE) {
-      if (ack_status[acknum % BUFFER_SIZE] == 0) {  // Not a duplicate
+      if (ack_status[acknum % BUFFER_SIZE] == 0) {  /* Not a duplicate */
           ack_status[acknum % BUFFER_SIZE] = 1;
           if (TRACE > 0)
               printf("----A: ACK %d is not a duplicate\n", acknum);
@@ -213,6 +213,8 @@ void A_init(void) {
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 void B_input(struct pkt packet) {
+  int i;
+  
   if (IsCorrupted(packet)) {
       if (TRACE > 0)
           printf("----B: packet %d is corrupted, ignored\n", packet.seqnum);
@@ -225,7 +227,7 @@ void B_input(struct pkt packet) {
       printf("----B: received packet %d\n", seq);
 
   /* Check if within receiver window */
-  if ((seq - expectedseqnum + SEQSPACE) % SEQSPACE < WINDOW_SIZE) {
+  if (seq >= expectedseqnum && seq < expectedseqnum + RECEIVER_WINDOW_SIZE) {
       /* Not received before */
       if (recv_status[seq % SEQSPACE] == 0) {
           recv_buffer[seq % SEQSPACE] = packet;
@@ -240,7 +242,7 @@ void B_input(struct pkt packet) {
 
       /* Always ACK it */
       struct pkt ack;
-      ack.seqnum = 0;  // Not used
+      ack.seqnum = 0;  /* Not used */
       ack.acknum = seq;
       ack.checksum = ComputeChecksum(ack);
       tolayer3(1, ack);
@@ -248,7 +250,7 @@ void B_input(struct pkt packet) {
       /* Deliver in-order packets to layer 5 */
       while (recv_status[expectedseqnum % SEQSPACE] == 1) {
           tolayer5(1, recv_buffer[expectedseqnum % SEQSPACE].payload);
-          recv_status[expectedseqnum % SEQSPACE] = 0;  // Clear
+          recv_status[expectedseqnum % SEQSPACE] = 0;  /* Clear */
           expectedseqnum++;
       }
   } else {
