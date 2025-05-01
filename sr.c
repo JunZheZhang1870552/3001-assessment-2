@@ -112,7 +112,6 @@ void A_output(struct msg message)
 void A_input(struct pkt packet)
 {
   int acknum = packet.acknum;
-  int i;
 
   /* if received ACK is not corrupted */
   if (!IsCorrupted(packet)) {
@@ -131,6 +130,7 @@ void A_input(struct pkt packet)
 
         /* packet is a new ACK */
         if (acked[acknum % WINDOWSIZE] == 0) {
+          acked[packet.acknum % WINDOWSIZE] = 1;
           if (TRACE > 0)
             printf("----A: ACK %d is not a duplicate\n", acknum);
 
@@ -145,7 +145,7 @@ void A_input(struct pkt packet)
 
           stoptimer(A);
           if (windowcount > 0) {
-            starttimer(A, RTT);  // restart for earliest unacked packet
+            starttimer(A, RTT);  /*restart for earliest unacked packet*/ 
           }
 
         } else {
@@ -199,7 +199,8 @@ void A_init(void)
   windowlast = -1;
   windowcount = 0;
 
-  for (int i = 0; i < WINDOWSIZE; i++)
+  int i;
+  for (i = 0; i < WINDOWSIZE; i++)
     acked[i] = 0;
 }
 
@@ -220,6 +221,7 @@ void B_input(struct pkt packet)
 {
   int i;
   int seq = packet.seqnum;
+  struct pkt ack;
 
   if (IsCorrupted(packet)) {
     if (TRACE > 0)
@@ -254,7 +256,6 @@ void B_input(struct pkt packet)
     }
 
     /* Send ACK for the packet */
-    struct pkt ack;
     ack.seqnum = 0;
     ack.acknum = seq;
     for (i = 0; i < 20; i++)
@@ -267,11 +268,10 @@ void B_input(struct pkt packet)
   }
   else {
     /* Out-of-window packet: resend ACK for the last valid packet */
-    struct pkt ack;
     ack.seqnum = 0;
-    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
+    ack.acknum = seq;  // even if it's out-of-window, we ack the packet we received
     for (i = 0; i < 20; i++)
-      ack.payload[i] = '0';
+        ack.payload[i] = '0';
     ack.checksum = ComputeChecksum(ack);
     tolayer3(B, ack);
 
@@ -287,7 +287,8 @@ void B_input(struct pkt packet)
 void B_init(void)
 {
   expectedseqnum = 0;
-  for (int i = 0; i < WINDOWSIZE; i++) {
+  int i;
+  for (i = 0; i < WINDOWSIZE; i++) {
     B_received[i] = 0;
   }
 }
