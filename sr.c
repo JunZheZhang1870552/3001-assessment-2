@@ -194,12 +194,12 @@ void A_timerinterrupt(void)
 /* entity A routines are called. You can use it to do any initialization */
 void A_init(void)
 {
+  int i;
   A_nextseqnum = 0;
   windowfirst = 0;
   windowlast = -1;
   windowcount = 0;
 
-  int i;
   for (i = 0; i < WINDOWSIZE; i++)
     acked[i] = 0;
 }
@@ -210,9 +210,9 @@ void A_init(void)
 
 /********* Receiver (B)  variables and procedures ************/
 
-static int expectedseqnum;                     // SR: base of receiver window
-static struct pkt B_buffer[WINDOWSIZE];        // buffer for out-of-order packets
-static int B_received[WINDOWSIZE];             // flags: whether a seqnum has been received
+static int expectedseqnum;                     /*SR: base of receiver window*/ 
+static struct pkt B_buffer[WINDOWSIZE];        /*buffer for out-of-order packets*/
+static int B_received[WINDOWSIZE];             /*flags: whether a seqnum has been received*/
 
 
 
@@ -269,7 +269,7 @@ void B_input(struct pkt packet)
   else {
     /* Out-of-window packet: resend ACK for the last valid packet */
     ack.seqnum = 0;
-    ack.acknum = seq;  // even if it's out-of-window, we ack the packet we received
+    ack.acknum = seq;   /*even if it's out-of-window, we ack the packet we received*/
     for (i = 0; i < 20; i++)
         ack.payload[i] = '0';
     ack.checksum = ComputeChecksum(ack);
@@ -286,8 +286,8 @@ void B_input(struct pkt packet)
 /* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
 {
-  expectedseqnum = 0;
   int i;
+  expectedseqnum = 0;
   for (i = 0; i < WINDOWSIZE; i++) {
     B_received[i] = 0;
   }
