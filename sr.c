@@ -28,6 +28,17 @@
 #define SEQSPACE 7      /* the min sequence space for GBN must be at least windowsize + 1 */
 #define NOTINUSE (-1)   /* used to fill header fields that are not being used */
 
+
+bool isInWindow(int seq, int base, int size) {
+  if (base + size < SEQSPACE)
+      return seq >= base && seq < base + size;
+  else
+      return (seq >= base && seq < SEQSPACE) || (seq < (base + size) % SEQSPACE);
+}
+
+
+
+
 /* generic procedure to compute the checksum of a packet.  Used by both sender and receiver  
    the simulator will overwrite part of your packet with 'z's.  It will not overwrite your 
    original checksum.  This procedure must generate a different checksum to the original if
@@ -219,66 +230,54 @@ static int B_received[WINDOWSIZE];             /*flags: whether a seqnum has bee
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 void B_input(struct pkt packet)
 {
-  int i;
-  int seq = packet.seqnum;
-  struct pkt ack;
+    int i;
+    int seq = packet.seqnum;
+    struct pkt ack;
 
-  if (IsCorrupted(packet)) {
-    if (TRACE > 0)
-      printf("----B: received corrupted packet, ignored.\n");
-    return;
-  }
-
-  if (TRACE > 0)
-    printf("----B: received packet %d correctly.\n", seq);
-
-  /* Check if the packet is within the receiver window */
-  if ((seq >= expectedseqnum && seq < expectedseqnum + WINDOWSIZE) ||
-      (expectedseqnum + WINDOWSIZE >= SEQSPACE && seq < (expectedseqnum + WINDOWSIZE) % SEQSPACE)) {
-
-    if (!B_received[seq % WINDOWSIZE]) {
-      /* New packet, buffer it */
-      B_received[seq % WINDOWSIZE] = 1;
-      B_buffer[seq % WINDOWSIZE] = packet;
-
-      if (TRACE > 0)
-        printf("----B: packet %d buffered.\n", seq);
-
-      /* Deliver in-order packets to layer5 */
-      while (B_received[expectedseqnum % WINDOWSIZE]) {
-        tolayer5(B, B_buffer[expectedseqnum % WINDOWSIZE].payload);
+    // Check if packet is corrupted
+    if (IsCorrupted(packet)) {
         if (TRACE > 0)
-          printf("----B: delivered packet %d to layer5\n", expectedseqnum);
-
-        B_received[expectedseqnum % WINDOWSIZE] = 0;
-        expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
-      }
+            printf("----B: received corrupted packet\n");
+        return;
     }
 
-    /* Send ACK for the packet */
+    // Check if in receiving window
+    if (isInWindow(seq, expectedseqnum, WINDOWSIZE)) {
+        if (!B_received[seq]) {
+            B_buffer[seq] = packet;
+            B_received[seq] = 1;
+
+            if (TRACE > 0)
+                printf("----B: packet %d is correctly received and buffered\n", seq);
+        } else {
+            if (TRACE > 0)
+                printf("----B: duplicate packet %d received, resend ACK\n", seq);
+        }
+
+        // Deliver all in-order buffered packets to application
+        while (B_received[expectedseqnum]) {
+            tolayer5(B, B_buffer[expectedseqnum].payload);
+            B_received[expectedseqnum] = 0;
+            expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
+        }
+    } else {
+        if (TRACE > 0)
+            printf("----B: packet %d not in receiving window, ignored but ACK sent\n", seq);
+    }
+
+    // Always send ACK
     ack.seqnum = 0;
     ack.acknum = seq;
-    for (i = 0; i < 20; i++)
-      ack.payload[i] = '0';
-    ack.checksum = ComputeChecksum(ack);
-    tolayer3(B, ack);
-
-    if (TRACE > 0)
-      printf("----B: ACK %d sent\n", seq);
-  }
-  else {
-    /* Out-of-window packet: resend ACK for the last valid packet */
-    ack.seqnum = 0;
-    ack.acknum = seq;   /*even if it's out-of-window, we ack the packet we received*/
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < 20; i++) {
         ack.payload[i] = '0';
+    }
     ack.checksum = ComputeChecksum(ack);
     tolayer3(B, ack);
 
     if (TRACE > 0)
-      printf("----B: packet %d not in window, resend ACK %d\n", seq, ack.acknum);
-  }
+        printf("----B: sent ACK %d\n", ack.acknum);
 }
+
 
 
 
