@@ -143,8 +143,8 @@ void A_input(struct pkt packet)
         if (acked[acknum] == 0) {
           acked[acknum] = 1;
 
-          if (TRACE > 2)
-            printf("[DEBUG] A received and processed ACK %d\n", acknum);
+          /*if (TRACE > 2)
+            printf("[DEBUG] A received and processed ACK %d\n", acknum);*/
 
 
 
@@ -194,8 +194,8 @@ void A_timerinterrupt(void)
       tolayer3(A, buffer[i]);
 
 
-      if (TRACE > 2)
-        printf("[DEBUG] A retransmitting packet seq %d\n", buffer[i].seqnum);
+      /*if (TRACE > 2)
+        printf("[DEBUG] A retransmitting packet seq %d\n", buffer[i].seqnum);*/
 
       packets_resent++;
       break;
@@ -263,8 +263,8 @@ void B_input(struct pkt packet)
       B_received[seq] = 1;
       B_buffer[seq] = packet;
 
-      if (TRACE > 2)
-        printf("[DEBUG] B received packet %d\n", seq);
+      /*if (TRACE > 2)
+        printf("[DEBUG] B received packet %d\n", seq);*/
 
 
     }
@@ -294,8 +294,8 @@ void B_input(struct pkt packet)
     tolayer3(1, ack);
 
 
-    if (TRACE > 2)
-      printf("[DEBUG] B sending ACK %d\n", ack.acknum);
+    /*if (TRACE > 2)
+      printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
 
   }
 }
