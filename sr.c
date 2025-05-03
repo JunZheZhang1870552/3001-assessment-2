@@ -297,7 +297,7 @@ void B_input(struct pkt packet)
   } else {
     /* packet is outside window: resend last ACK */
     if (TRACE > 0)
-      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
+      printf("----B: packet %d is outside window, resend ACK!\n", seq);
     ack.seqnum = 0;
     ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
