@@ -103,8 +103,10 @@ void A_output(struct msg message)
       printf("Sending packet %d to layer 3\n", sendpkt.seqnum);
     tolayer3 (A, sendpkt);
 
-    /* start timer only for the individual packet (SR logic) */
-    starttimer(A, RTT);
+    /* Only start timer if this is the first unACKed packet */
+    if (windowcount == 1) {
+      starttimer(A, RTT);
+    }
 
     /* no cumulative ACK logic here; SR handles ACK per packet */
     A_nextseqnum = (A_nextseqnum + 1) % SEQSPACE;  
@@ -161,6 +163,7 @@ void A_input(struct pkt packet)
           stoptimer(A);
           if (windowcount > 0)
             starttimer(A, RTT);  /* restart for earliest unacked packet */
+          
         }
         else {
           if (TRACE > 0)
