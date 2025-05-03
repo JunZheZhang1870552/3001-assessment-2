@@ -274,6 +274,8 @@ void B_input(struct pkt packet)
       B_received[seq] = 1;
       B_buffer[seq] = packet;
 
+      packets_received++;
+
       /*if (TRACE > 2)
         printf("[DEBUG] B received packet %d\n", seq);*/
 
@@ -290,7 +292,6 @@ void B_input(struct pkt packet)
     while (B_received[expectedseqnum]) {
       for (i = 0; i < 20; i++) message.data[i] = B_buffer[expectedseqnum].payload[i];
       tolayer5(B, message.data);
-      packets_received++;
       B_received[expectedseqnum] = 0;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
     }
