@@ -262,16 +262,17 @@ void B_input(struct pkt packet)
 
   /* check if seq is within receiving window */
   if (isInWindow(seq, expectedseqnum, WINDOWSIZE)) {
+
+    if (TRACE > 0)
+        printf("----B: packet %d is correctly received, send ACK!\n", seq);
+
+
     if (!B_received[seq]) {
       B_received[seq] = 1;
       B_buffer[seq] = packet;
 
       /*if (TRACE > 2)
         printf("[DEBUG] B received packet %d\n", seq);*/
-
-      if (TRACE > 0)
-        printf("----B: packet %d is correctly received, send ACK!\n", seq);
-
 
     }
 
