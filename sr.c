@@ -161,8 +161,11 @@ void A_input(struct pkt packet)
           }
 
           stoptimer(A);
-          if (windowcount > 0)
+          if (windowcount > 0){
             starttimer(A, RTT);  /* restart for earliest unacked packet */
+          }else{
+            stoptimer(A);
+          }
           
         }
         else {
@@ -199,7 +202,9 @@ void A_timerinterrupt(void)
 
       /*if (TRACE > 2)
         printf("[DEBUG] A retransmitting packet seq %d\n", buffer[i].seqnum);*/
-
+      if (TRACE > 0)
+        printf("---A: resending packet %d\n", buffer[i].seqnum);
+      
       packets_resent++;
       break;
     }
@@ -293,7 +298,8 @@ void B_input(struct pkt packet)
     }
   } else {
     /* packet is outside window: resend last ACK */
-    printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
+    if (TRACE > 0)
+      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
     ack.seqnum = 0;
     ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
