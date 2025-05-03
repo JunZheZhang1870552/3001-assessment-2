@@ -269,6 +269,9 @@ void B_input(struct pkt packet)
       /*if (TRACE > 2)
         printf("[DEBUG] B received packet %d\n", seq);*/
 
+      if (TRACE > 0)
+        printf("----B: packet %d is correctly received, send ACK!\n", seq);
+
 
     }
 
