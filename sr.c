@@ -160,7 +160,7 @@ void A_input(struct pkt packet)
             windowcount--;
           }
 
-          stoptimer(A);
+          
           if (windowcount > 0){
             starttimer(A, RTT);  /* restart for earliest unacked packet */
           }else{
