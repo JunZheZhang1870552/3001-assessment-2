@@ -204,7 +204,6 @@ void A_timerinterrupt(void)
         printf("---A: resending packet %d\n", buffer[i].seqnum);
       
       packets_resent++;
-      break;
     }
   }
 
@@ -288,11 +287,22 @@ void B_input(struct pkt packet)
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
 
+
     /* deliver in-order packets to layer5 */
     while (B_received[expectedseqnum]) {
-      for (i = 0; i < 20; i++) message.data[i] = B_buffer[expectedseqnum].payload[i];
+      for (i = 0; i < 20; i++) {
+        message.data[i] = B_buffer[expectedseqnum].payload[i];
+      }
+
+
+      /*test*/
+      printf("----B: delivering packet %d to layer5\n", expectedseqnum);
+
+
+
       tolayer5(B, message.data);
       B_received[expectedseqnum] = 0;
+      B_buffer[expectedseqnum].seqnum = NOTINUSE;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
     }
   } else {
@@ -300,7 +310,7 @@ void B_input(struct pkt packet)
     if (TRACE > 0)
       printf("----B: packet %d is correctly received, send ACK!\n", seq);
     ack.seqnum = 0;
-    ack.acknum = seq;
+    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
