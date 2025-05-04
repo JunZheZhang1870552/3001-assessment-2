@@ -257,7 +257,6 @@ void B_input(struct pkt packet)
     /* packet is corrupted or out of order resend last ACK */
     if (TRACE > 0)
       printf("----B: packet %d is correctly received, send ACK!\n", seq);
-    packets_received++;
     ack.seqnum = 0;
     ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
