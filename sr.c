@@ -4,6 +4,7 @@
 #include "emulator.h"
 #include "sr.h"
 
+#include <string.h>
 
 /* ******************************************************************
    Go Back N protocol.  Adapted from J.F.Kurose
@@ -244,78 +245,60 @@ static int B_received[SEQSPACE];             /*flags: whether a seqnum has been 
 
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
-void B_input(struct pkt packet)
-{
-  int seq = packet.seqnum;
-  int i;
-  struct pkt ack;
-  struct msg message;
+void B_input(struct pkt packet) {
+  int seq;
+  struct pkt ack_pkt;
 
-  if (IsCorrupted(packet)) {
-    /* packet is corrupted or out of order resend last ACK */
-    printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
-    ack.seqnum = 0;
-    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
-    for (i = 0; i < 20; i++) ack.payload[i] = 0;
-    ack.checksum = ComputeChecksum(ack);
-    tolayer3(1, ack);
-    return;
+  seq = packet.seqnum;
+
+  /* Check for corruption */
+  if (packet.checksum != ComputeChecksum(packet)) {
+      /* Corrupted packet, ignore */
+      printf("----B: packet %d is corrupted, ignored.\n", seq);
+      return;
   }
 
-  /* check if seq is within receiving window */
+  /* Check if packet is within receive window */
   if (isInWindow(seq, expectedseqnum, WINDOWSIZE)) {
+      if (!B_received[seq]) {
+          /* First time receiving this packet */
+          printf("----B: packet %d is correctly received, send ACK!\n", seq);
+          B_buffer[seq] = packet;
+          B_received[seq] = 1;
 
-    if (TRACE > 0)
-        printf("----B: packet %d is correctly received, send ACK!\n", seq);
+          packets_received++;
 
+          /* Send ACK for this packet */
+          memset(&ack_pkt, 0, sizeof(struct pkt));
+          ack_pkt.acknum = seq;
+          ack_pkt.checksum = ComputeChecksum(ack_pkt);
+          tolayer3(1, ack_pkt);
 
-    if (!B_received[seq]) {
-      B_received[seq] = 1;
-      B_buffer[seq] = packet;
-
-      packets_received++;
-
-      /*if (TRACE > 2)
-        printf("[DEBUG] B received packet %d\n", seq);*/
-
-    }
-
-    /* send ACK */
-    ack.seqnum = 0;
-    ack.acknum = seq;
-    for (i = 0; i < 20; i++) ack.payload[i] = 0;
-    ack.checksum = ComputeChecksum(ack);
-    tolayer3(1, ack);
-
-
-    /* deliver in-order packets to layer5 */
-    while (B_received[expectedseqnum]) {
-      for (i = 0; i < 20; i++) {
-        message.data[i] = B_buffer[expectedseqnum].payload[i];
+          /* Deliver all in-order packets to application layer */
+          while (B_received[expectedseqnum]) {
+              printf("----B: delivering packet %d to layer5\n", expectedseqnum);
+              tolayer5(1, B_buffer[expectedseqnum].payload);
+              B_received[expectedseqnum] = 0;
+              expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
+          }
+      } else {
+          /* Duplicate packet in window */
+          printf("----B: packet %d is correctly received, send ACK!\n", seq);
+          memset(&ack_pkt, 0, sizeof(struct pkt));
+          ack_pkt.acknum = seq;
+          ack_pkt.checksum = ComputeChecksum(ack_pkt);
+          tolayer3(1, ack_pkt);
       }
-
-      tolayer5(B, message.data);
-      B_received[expectedseqnum] = 0;
-      B_buffer[expectedseqnum].seqnum = NOTINUSE;
-      expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
-    }
   } else {
-    /* packet is outside window: resend last ACK */
-    if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n", seq);
-    ack.seqnum = 0;
-    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
-    for (i = 0; i < 20; i++) ack.payload[i] = 0;
-    ack.checksum = ComputeChecksum(ack);
-    tolayer3(1, ack);
-
-
-    /*if (TRACE > 2)
-      printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
-
-      
+      /* Packet is outside receive window */
+      printf("----B: packet %d not in window, send ACK!\n", seq);
+      memset(&ack_pkt, 0, sizeof(struct pkt));
+      ack_pkt.acknum = (expectedseqnum + MAX_SEQ - 1) % MAX_SEQ;
+      ack_pkt.checksum = ComputeChecksum(ack_pkt);
+      tolayer3(1, ack_pkt);
   }
 }
+
 
 
 
