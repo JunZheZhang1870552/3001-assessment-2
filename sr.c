@@ -317,3 +317,32 @@ void B_input(struct pkt packet)
 
   }
 }
+
+/* the following routine will be called once (only) before any other */
+/* entity B routines are called. You can use it to do any initialization */
+void B_init(void)
+{
+  int i;
+  expectedseqnum = 0;
+
+  for (i = 0; i < SEQSPACE; i++) {
+    B_received[i] = 0;
+    B_buffer[i].seqnum = NOTINUSE;
+  }
+}
+
+
+/******************************************************************************
+ * The following functions need be completed only for bi-directional messages *
+ *****************************************************************************/
+
+/* Note that with simplex transfer from a-to-B, there is no B_output() */
+void B_output(struct msg message)  
+{
+}
+
+/* called when B's timer goes off */
+void B_timerinterrupt(void)
+{
+}
+
