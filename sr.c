@@ -188,28 +188,27 @@ void A_input(struct pkt packet)
 /* called when A's timer goes off*/
 void A_timerinterrupt(void)
 {
-  int i;
+  int i = windowfirst;
 
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
   /* Selective Repeat: retransmit the earliest unACKed packet */
-  for (i = 0; i < SEQSPACE; i++) {
-    if (acked[i] == 0 && buffer[i].seqnum != NOTINUSE) {
+  for (int count = 0; count < windowcount; count++) {
+    if (!acked[buffer[i].seqnum]) {
       tolayer3(A, buffer[i]);
-
-
-      /*if (TRACE > 2)
-        printf("[DEBUG] A retransmitting packet seq %d\n", buffer[i].seqnum);*/
-      if (TRACE > 0)
-        printf("---A: resending packet %d\n", buffer[i].seqnum);
-      
       packets_resent++;
+      if (TRACE > 0)
+          printf("---A: resending packet %d\n", buffer[i].seqnum);
     }
+    i = (i + 1) % SEQSPACE;
   }
 
   /* Restart timer after retransmission */
-  starttimer(A, RTT);
+  if (windowcount > 0) {
+    starttimer(A, RTT);
+  }
+
 }
 
 
@@ -293,7 +292,7 @@ void B_input(struct pkt packet) {
       /* Packet is outside receive window */
       printf("----B: packet %d not in window, send ACK!\n", seq);
       memset(&ack_pkt, 0, sizeof(struct pkt));
-      ack_pkt.acknum = (expectedseqnum + MAX_SEQ - 1) % MAX_SEQ;
+      ack_pkt.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
       ack_pkt.checksum = ComputeChecksum(ack_pkt);
       tolayer3(1, ack_pkt);
   }
