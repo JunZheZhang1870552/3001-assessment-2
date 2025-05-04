@@ -205,6 +205,7 @@ void A_timerinterrupt(void)
         printf("---A: resending packet %d\n", buffer[i].seqnum);
       
       packets_resent++;
+      break;
     }
   }
 
