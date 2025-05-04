@@ -302,10 +302,11 @@ void B_input(struct pkt packet)
     ack.acknum = seq;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
-    tolayer3(1, ack);
 
     if (TRACE > 0) 
       printf("----B: packet %d is correctly received, send ACK!\n", seq);
+    tolayer3(1, ack);
+
     packets_received++;
 
     /*if (TRACE > 2)
