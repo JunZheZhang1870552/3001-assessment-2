@@ -294,12 +294,6 @@ void B_input(struct pkt packet)
         message.data[i] = B_buffer[expectedseqnum].payload[i];
       }
 
-
-      /*test*/
-      printf("----B: delivering packet %d to layer5\n", expectedseqnum);
-
-
-
       tolayer5(B, message.data);
       B_received[expectedseqnum] = 0;
       B_buffer[expectedseqnum].seqnum = NOTINUSE;
@@ -319,6 +313,7 @@ void B_input(struct pkt packet)
     /*if (TRACE > 2)
       printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
 
+      
   }
 }
 
