@@ -255,7 +255,8 @@ void B_input(struct pkt packet)
 
   if (IsCorrupted(packet)) {
     /* packet is corrupted or out of order resend last ACK */
-    printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
+    if (TRACE > 0)
+      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
     ack.seqnum = 0;
     ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
@@ -272,12 +273,13 @@ void B_input(struct pkt packet)
       B_received[seq] = 1;
       B_buffer[seq] = packet;
 
-      packets_received++;
-
+      if (TRACE > 0)
+        printf("----B: packet %d is correctly received, send ACK!\n", seq);
       /*if (TRACE > 2)
         printf("[DEBUG] B received packet %d\n", seq);*/
 
     }
+    packets_received++;
 
     /* send ACK */
     ack.seqnum = 0;
@@ -289,8 +291,6 @@ void B_input(struct pkt packet)
     /* deliver in-order packets to layer5 */
     while (B_received[expectedseqnum]) {
       for (i = 0; i < 20; i++) message.data[i] = B_buffer[expectedseqnum].payload[i];
-      if (TRACE > 0)
-        printf("----B: packet %d is correctly received, send ACK!\n", seq);
       tolayer5(B, message.data);
       B_received[expectedseqnum] = 0;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
@@ -303,6 +303,8 @@ void B_input(struct pkt packet)
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
 
+    if (TRACE > 0) 
+      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
 
     /*if (TRACE > 2)
       printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
