@@ -81,7 +81,6 @@ void A_output(struct msg message)
 {
   struct pkt sendpkt;
   int i;
-
   /* if not blocked waiting on ACK */
   if (windowcount < WINDOWSIZE) {
     if (TRACE > 1)
@@ -292,7 +291,7 @@ void B_input(struct pkt packet) {
       /* Packet is outside receive window */
       printf("----B: packet %d not in window, send ACK!\n", seq);
       memset(&ack_pkt, 0, sizeof(struct pkt));
-      ack_pkt.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
+      ack_pkt.acknum = seq;
       ack_pkt.checksum = ComputeChecksum(ack_pkt);
       tolayer3(1, ack_pkt);
   }
