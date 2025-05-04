@@ -316,11 +316,6 @@ void B_input(struct pkt packet)
 
 
 
-
-
-
-
-
 /* the following routine will be called once (only) before any other */
 /* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
