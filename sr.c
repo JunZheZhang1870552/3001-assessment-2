@@ -274,12 +274,12 @@ void B_input(struct pkt packet)
       B_received[seq] = 1;
       B_buffer[seq] = packet;
 
-      if (TRACE > 0)
-        printf("----B: packet %d is correctly received, send ACK!\n", seq);
       /*if (TRACE > 2)
         printf("[DEBUG] B received packet %d\n", seq);*/
 
     }
+    if (TRACE > 0)
+      printf("----B: packet %d is correctly received, send ACK!\n", seq);
     packets_received++;
 
     /* send ACK */
@@ -303,9 +303,6 @@ void B_input(struct pkt packet)
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
-
-    if (TRACE > 0) 
-      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
 
     /*if (TRACE > 2)
       printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
