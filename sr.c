@@ -196,13 +196,13 @@ void A_timerinterrupt(void)
   /* Selective Repeat: retransmit the earliest unACKed packet */
   for (i = 0; i < SEQSPACE; i++) {
     if (acked[i] == 0 && buffer[i].seqnum != NOTINUSE) {
+      if (TRACE > 0)
+        printf("---A: resending packet %d\n", buffer[i].seqnum);
       tolayer3(A, buffer[i]);
 
 
       /*if (TRACE > 2)
         printf("[DEBUG] A retransmitting packet seq %d\n", buffer[i].seqnum);*/
-      if (TRACE > 0)
-        printf("---A: resending packet %d\n", buffer[i].seqnum);
       
       packets_resent++;
       break;
