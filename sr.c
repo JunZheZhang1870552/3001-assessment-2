@@ -205,7 +205,6 @@ void A_timerinterrupt(void)
         printf("---A: resending packet %d\n", buffer[i].seqnum);
       
       packets_resent++;
-      break;
     }
   }
 
@@ -255,61 +254,37 @@ void B_input(struct pkt packet)
 
   if (IsCorrupted(packet)) {
     /* packet is corrupted or out of order resend last ACK */
-    ack.seqnum = 0;
-    ack.acknum = (expectedseqnum == 0) ? 0 : expectedseqnum - 1;
-    for (i = 0; i < 20; i++) ack.payload[i] = 0;
-    ack.checksum = ComputeChecksum(ack);
-    tolayer3(1, ack);
     return;
   }
 
+  if (TRACE > 0)
+      printf("----B: packet %d is correctly received, send ACK!\n", seq);
+  packets_received++;
+
+
   /* check if seq is within receiving window */
-  if (isInWindow(seq, expectedseqnum, WINDOWSIZE)) {
-
-
-    if (!B_received[seq]) {
-      B_received[seq] = 1;
-      B_buffer[seq] = packet;
-
-      /*if (TRACE > 2)
-        printf("[DEBUG] B received packet %d\n", seq);*/
-
-    }
-    if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n", seq);
-    packets_received++;
-
-    /* send ACK */
-    ack.seqnum = 0;
-    ack.acknum = seq;
-    for (i = 0; i < 20; i++) ack.payload[i] = 0;
-    ack.checksum = ComputeChecksum(ack);
-    tolayer3(1, ack);
-
-    /* deliver in-order packets to layer5 */
-    while (B_received[expectedseqnum]) {
-      for (i = 0; i < 20; i++) message.data[i] = B_buffer[expectedseqnum].payload[i];
-      tolayer5(B, message.data);
-      B_received[expectedseqnum] = 0;
-      expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
-    }
-  } else {
-    /* packet is outside window: resend last ACK */
-    ack.seqnum = 0;
-    ack.acknum = (expectedseqnum == 0) ? 0 : expectedseqnum - 1;
-    for (i = 0; i < 20; i++) ack.payload[i] = 0;
-    ack.checksum = ComputeChecksum(ack);
-
-    if (TRACE > 0) 
-      printf("----B: packet %d is correctly received, send ACK!\n", seq);
-    tolayer3(1, ack);
-
-    packets_received++;
-
-    /*if (TRACE > 2)
-      printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
-
+  if (!B_received[seq]) {
+    B_received[seq] = 1;
+    B_buffer[seq] = packet;
   }
+
+  while (B_received[expectedseqnum]) {
+    for (i = 0; i < 20; i++)
+        message.data[i] = B_buffer[expectedseqnum].payload[i];
+
+    tolayer5(B, message.data);
+    B_received[expectedseqnum] = 0;
+    expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
+  }
+
+  ack.seqnum = NOTINUSE;
+    ack.acknum = packet.seqnum;
+    for (i = 0; i < 20; i++)
+        ack.payload[i] = '0';
+
+    ack.checksum = ComputeChecksum(ack);
+    tolayer3(1, ack);
+    
 }
 
 
