@@ -188,12 +188,13 @@ void A_input(struct pkt packet)
 void A_timerinterrupt(void)
 {
   int i = windowfirst;
+  int count;
 
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
   /* Selective Repeat: retransmit the earliest unACKed packet */
-  for (int count = 0; count < windowcount; count++) {
+  for (count = 0; count < windowcount; count++) {
     if (!acked[buffer[i].seqnum]) {
       tolayer3(A, buffer[i]);
       packets_resent++;
