@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -204,13 +205,12 @@ void A_timerinterrupt(void)
         printf("---A: resending packet %d\n", buffer[i].seqnum);
       
       packets_resent++;
+      break;
     }
   }
 
   /* Restart timer after retransmission */
-  if (windowcount > 0) {
-    starttimer(A, RTT);
-  }
+  starttimer(A, RTT);
 }
 
 
@@ -267,9 +267,6 @@ void B_input(struct pkt packet)
   /* check if seq is within receiving window */
   if (isInWindow(seq, expectedseqnum, WINDOWSIZE)) {
 
-    if (TRACE > 0)
-        printf("----B: packet %d is correctly received, send ACK!\n", seq);
-
 
     if (!B_received[seq]) {
       B_received[seq] = 1;
@@ -289,27 +286,22 @@ void B_input(struct pkt packet)
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
 
-
     /* deliver in-order packets to layer5 */
     while (B_received[expectedseqnum]) {
-      for (i = 0; i < 20; i++) {
-        message.data[i] = B_buffer[expectedseqnum].payload[i];
-      }
-
+      for (i = 0; i < 20; i++) message.data[i] = B_buffer[expectedseqnum].payload[i];
+      if (TRACE > 0)
+        printf("----B: packet %d is correctly received, send ACK!\n", seq);
       tolayer5(B, message.data);
       B_received[expectedseqnum] = 0;
-      B_buffer[expectedseqnum].seqnum = NOTINUSE;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
     }
   } else {
     /* packet is outside window: resend last ACK */
-    if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n", seq);
     ack.seqnum = 0;
-    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
+    ack.acknum = seq;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
-    tolayer3(B, ack);
+    tolayer3(1, ack);
 
 
     /*if (TRACE > 2)
@@ -317,6 +309,13 @@ void B_input(struct pkt packet)
 
   }
 }
+
+
+
+
+
+
+
 
 /* the following routine will be called once (only) before any other */
 /* entity B routines are called. You can use it to do any initialization */
@@ -345,4 +344,3 @@ void B_output(struct msg message)
 void B_timerinterrupt(void)
 {
 }
-
