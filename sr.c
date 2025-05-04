@@ -161,11 +161,10 @@ void A_input(struct pkt packet)
               windowfirst = (windowfirst + 1) % SEQSPACE;
               windowcount--;
             }
-          }
-          stoptimer(A);
-          if (windowcount > 0){
-            starttimer(A, RTT);  /* restart for earliest unacked packet */
-          }
+            stoptimer(A);
+            if (windowcount > 0){
+              starttimer(A, RTT);  /* restart for earliest unacked packet */
+            }
         }
         else {
           if (TRACE > 0)
