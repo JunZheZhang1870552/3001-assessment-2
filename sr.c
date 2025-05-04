@@ -298,9 +298,9 @@ void B_input(struct pkt packet)
   } else {
     /* packet is outside window: resend last ACK */
     if (TRACE > 0)
-      printf("----B: packet %d is outside window, resend ACK!\n", seq);
+      printf("----B: packet %d is correctly received, send ACK!\n", seq);
     ack.seqnum = 0;
-    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
+    ack.acknum = seq;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
