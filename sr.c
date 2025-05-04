@@ -156,16 +156,16 @@ void A_input(struct pkt packet)
           new_ACKs++;
 
           /* slide window base forward only if ACK is for the windowfirst */
-          while (windowcount > 0 && acked[buffer[windowfirst].seqnum]) {
-            windowfirst = (windowfirst + 1) % SEQSPACE;
-            windowcount--;
+          if (acknum == buffer[windowfirst].seqnum) {
+            while (windowcount > 0 && acked[buffer[windowfirst].seqnum]) {
+              windowfirst = (windowfirst + 1) % SEQSPACE;
+              windowcount--;
+            }
           }
-
           stoptimer(A);
           if (windowcount > 0){
             starttimer(A, RTT);  /* restart for earliest unacked packet */
           }
-          
         }
         else {
           if (TRACE > 0)
