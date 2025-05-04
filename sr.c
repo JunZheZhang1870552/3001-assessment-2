@@ -192,13 +192,14 @@ void A_input(struct pkt packet)
 void A_timerinterrupt(void)
 {
   int i;
-  int index = (windowfirst + i) % SEQSPACE;
+  int index;
 
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
   /* Selective Repeat: retransmit the earliest unACKed packet */
   for (i = 0; i < windowcount; i++) {
+    index = (windowfirst + i) % SEQSPACE;
     if (acked[buffer[index].seqnum] == 0) {
       if (TRACE > 0)
         printf("---A: resending packet %d\n", buffer[i].seqnum);
