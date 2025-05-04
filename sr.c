@@ -261,7 +261,8 @@ void B_input(struct pkt packet) {
   if (isInWindow(seq, expectedseqnum, WINDOWSIZE)) {
       if (!B_received[seq]) {
           /* First time receiving this packet */
-          printf("----B: packet %d is correctly received, send ACK!\n", seq);
+          if (TRACE > 0)
+            printf("----B: packet %d is correctly received, send ACK!\n", seq);
           B_buffer[seq] = packet;
           B_received[seq] = 1;
 
@@ -275,14 +276,16 @@ void B_input(struct pkt packet) {
 
           /* Deliver all in-order packets to application layer */
           while (B_received[expectedseqnum]) {
+            if (TRACE > 0)
               printf("----B: delivering packet %d to layer5\n", expectedseqnum);
-              tolayer5(1, B_buffer[expectedseqnum].payload);
-              B_received[expectedseqnum] = 0;
-              expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
+            tolayer5(1, B_buffer[expectedseqnum].payload);
+            B_received[expectedseqnum] = 0;
+            expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
           }
       } else {
           /* Duplicate packet in window */
-          printf("----B: packet %d is correctly received, send ACK!\n", seq);
+          if (TRACE > 0)
+            printf("----B: packet %d is correctly received, send ACK!\n", seq);
           memset(&ack_pkt, 0, sizeof(struct pkt));
           ack_pkt.acknum = seq;
           ack_pkt.checksum = ComputeChecksum(ack_pkt);
@@ -290,7 +293,8 @@ void B_input(struct pkt packet) {
       }
   } else {
       /* Packet is outside receive window */
-      printf("----B: packet %d not in window, send ACK!\n", seq);
+      if (TRACE > 0)
+        printf("----B: packet %d is correctly received, send ACK!\n", seq);
       memset(&ack_pkt, 0, sizeof(struct pkt));
       ack_pkt.acknum = seq;
       ack_pkt.checksum = ComputeChecksum(ack_pkt);
