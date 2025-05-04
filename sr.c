@@ -298,13 +298,13 @@ void B_input(struct pkt packet)
   } else {
     /* packet is outside window: resend last ACK */
     ack.seqnum = 0;
-    ack.acknum = seq;
+    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
 
     if (TRACE > 0) 
-      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
+      printf("----B: packet %d is correctly received, send ACK!\n", seq);
 
     /*if (TRACE > 2)
       printf("[DEBUG] B sending ACK %d\n", ack.acknum);*/
