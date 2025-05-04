@@ -303,7 +303,7 @@ void B_input(struct pkt packet)
     ack.checksum = ComputeChecksum(ack);
 
     if (TRACE > 0) 
-      printf("----B: packet %d is correctly received, send ACK!\n", seq);
+      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
     tolayer3(1, ack);
 
     packets_received++;
