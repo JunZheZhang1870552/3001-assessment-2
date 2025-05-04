@@ -256,7 +256,7 @@ void B_input(struct pkt packet)
   if (IsCorrupted(packet)) {
     /* packet is corrupted or out of order resend last ACK */
     ack.seqnum = 0;
-    ack.acknum = seq;
+    ack.acknum = (expectedseqnum == 0) ? 0 : expectedseqnum - 1;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
     tolayer3(1, ack);
@@ -296,7 +296,7 @@ void B_input(struct pkt packet)
   } else {
     /* packet is outside window: resend last ACK */
     ack.seqnum = 0;
-    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
+    ack.acknum = (expectedseqnum == 0) ? 0 : expectedseqnum - 1;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
 
