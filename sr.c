@@ -208,9 +208,8 @@ void A_timerinterrupt(void)
   }
 
   /* Restart timer after retransmission */
-  if (windowcount > 0) {
     starttimer(A, RTT);
-  }
+  
 }
 
 
