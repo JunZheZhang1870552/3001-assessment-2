@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -83,7 +82,7 @@ void A_output(struct msg message)
   int i;
 
   /* if not blocked waiting on ACK */
-  if (windowcount < WINDOWSIZE && !isInWindow(A_nextseqnum, windowfirst, windowcount)) {
+  if (windowcount < WINDOWSIZE) {
     if (TRACE > 1)
       printf("----A: New message arrives, send window is not full, send new messge to layer3!\n");
 
@@ -192,18 +191,21 @@ void A_input(struct pkt packet)
 void A_timerinterrupt(void)
 {
   int i;
-  int index;
 
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
   /* Selective Repeat: retransmit the earliest unACKed packet */
-  for (i = 0; i < windowcount; i++) {
-    index = (windowfirst + i) % SEQSPACE;
-    if (acked[buffer[index].seqnum] == 0) {
+  for (i = 0; i < SEQSPACE; i++) {
+    if (acked[i] == 0 && buffer[i].seqnum != NOTINUSE) {
       if (TRACE > 0)
         printf("---A: resending packet %d\n", buffer[i].seqnum);
       tolayer3(A, buffer[i]);
+
+
+      /*if (TRACE > 2)
+        printf("[DEBUG] A retransmitting packet seq %d\n", buffer[i].seqnum);*/
+      
       packets_resent++;
       break;
     }
