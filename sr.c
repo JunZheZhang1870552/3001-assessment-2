@@ -296,7 +296,7 @@ void B_input(struct pkt packet)
   } else {
     /* packet is outside window: resend last ACK */
     ack.seqnum = 0;
-    ack.acknum = seq;
+    ack.acknum = (expectedseqnum + SEQSPACE - 1) % SEQSPACE;
     for (i = 0; i < 20; i++) ack.payload[i] = 0;
     ack.checksum = ComputeChecksum(ack);
 
