@@ -126,6 +126,7 @@ void A_output(struct msg message)
 void A_input(struct pkt packet)
 {
   int acknum = packet.acknum;
+  int old_windowfirst = windowfirst;
 
   /* if received ACK is not corrupted */
   if (!IsCorrupted(packet)) {
@@ -161,10 +162,13 @@ void A_input(struct pkt packet)
               windowfirst = (windowfirst + 1) % SEQSPACE;
               windowcount--;
             }
-            stoptimer(A);
-            if (windowcount > 0){
-              starttimer(A, RTT);  /* restart for earliest unacked packet */
+            if (windowfirst != old_windowfirst) {
+              stoptimer(A);
+              if (windowcount > 0){
+                starttimer(A, RTT);  /* restart for earliest unacked packet */
+              }
             }
+          }
         }
         else {
           if (TRACE > 0)
